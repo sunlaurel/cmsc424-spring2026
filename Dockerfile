@@ -32,6 +32,9 @@ ADD Assignment-0/sample_analytics/customers.json \
     Assignment-0/sample_analytics/transactions.json \
     Assignment-0/users_with_badges.json \
     Assignment-0/posts.json \
+    Assignment-0/users.csv \
+    Assignment-0/posts.csv \
+    Assignment-0/badges.csv \
     /datatemp/
 
 ADD Assignment-0/zips.json /datatemp/
