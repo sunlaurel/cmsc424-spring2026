@@ -4,12 +4,12 @@ queries = ["" for i in range(0, 15)]
 ### List all the users who have a reputation between 100 and 1000;
 ### Output columns and order: Id, Reputation, CreationDate, DisplayName
 ### Order by Id ascending
-queries[0] = """
-select Id, Reputation, CreationDate,  DisplayName
-from users
-where reputation >= 100 and reputation <= 1000
-order by Id asc;
-"""
+queries[0] = (
+    "select Id, Reputation, CreationDate,  DisplayName \
+              from users \
+              where reputation >= 100 and reputation <= 1000 \
+              order by Id asc;"
+)
 
 ### 1 [0.25]. Create a copy of the "Comments" table and add different columns.
 ### select * into CommentsCopy from Comments, OR
@@ -24,9 +24,14 @@ order by Id asc;
 ### CommentLength (integer), CommenterDisplayName (varchar(40)), and lengthFilter (of type LengthFilterType).
 ### See: https://www.postgresql.org/docs/current/datatype-enum.html if you are
 ### unsure how to use the enum type
-queries[1] = """
-select 0;
-"""
+queries[1] = (
+    " \
+ALTER TABLE CommentsCopy \
+ADD COLUMN CommentLength INT, \
+ADD COLUMN CommenterDisplayName varchar(40), \
+ADD COLUMN LengthFilter LengthFilterType; \
+"
+)
 
 ### 2 [0.25]. Write a single query/statement to set the values of the new columns.
 ###
@@ -35,21 +40,40 @@ select 0;
 ###         and Low: length(text) < 50
 ### Use CASE to write this part.
 ### You may have to do an explicit cast for the popularity attribute using '::lengthfiltertype'
-### 
+###
 ### commenterDisplayName should be obtained from the Users table
 ###
 ### https://www.postgresql.org/docs/current/sql-update.html has examples at the
 ### bottom to show how to update multiple columns in the same query
-queries[2] = """
-select 0;
-"""
+queries[2] = (
+    " \
+    UPDATE CommentsCopy \
+    SET \
+    CommentLength = LENGTH(text), \
+    LengthFilter = CASE \
+        WHEN LENGTH(text) > 100 THEN \
+            'Long'::LengthFilterType \
+        WHEN LENGTH(text) BETWEEN 50 AND 100 THEN \
+            'Medium'::LengthFilterType \
+        ELSE \
+            'Short'::LengthFilterType \
+    END, \
+    CommenterDisplayName = ( \
+    SELECT displayName \
+    FROM Users u \
+    WHERE userid = u.id); \
+"
+)
 
 
-### 3 [0.25]. Write a query "delete" all Posts from CommentsCopy where the displayname of the user who 
+### 3 [0.25]. Write a query "delete" all Posts from CommentsCopy where the displayname of the user who
 ### posted it contains the word "nick" (case insensitive).
-queries[3] = """
-select 0;
-"""
+queries[3] = (
+    " \
+DELETE FROM CommentsCopy \
+WHERE CommenterDisplayName ILIKE '%nick%'; \
+"
+)
 
 ### 4 [0.25]. Use "generate_series" to write a single statement to insert 10 new tuples
 ### to 'CommentsCopy' of the form:
@@ -61,11 +85,15 @@ select 0;
 ### All other attributes should be set to NULL.
 ###
 ### HINT: Use concatenation operator: 'Comment' || 0, and addition on dates to simplify.
-### 
+###
 ### Use `select * from commentscopy where id >= 50001 and id <=50010;` to confirm.
-queries[4] = """
-select 0;
-"""
+queries[4] = (
+    " \
+INSERT INTO CommentsCopy (ID, Text, PostID, Score, CreationDate, UserId) \
+SELECT ID, 'Comment ' || ID AS Text, 2 AS PostId, 0 AS Score, TO_DATE('20221000', 'YYYYMMDD') + (ID - 50001) * INTERVAL '1 day', -1 AS UserId \
+FROM generate_series(50001, 50010) ID; \
+"
+)
 
 
 ### 5 [0.25]. The above command should not have actually worked, because the "ID" column is
@@ -85,9 +113,16 @@ select 0;
 ### We can't add a primary key constraint any more, because there are duplicate values in the "ID" column now
 ### and those would need to be taken care of manually first.
 ###
-queries[5] = """
-select 0;
-"""
+queries[5] = (
+    " \
+ALTER TABLE CommentsCopy \
+ALTER ID SET NOT NULL, \
+ADD CONSTRAINT commentscopy_postid_fkey \
+    FOREIGN KEY (PostId) REFERENCES Posts (ID), \
+ADD CONSTRAINT scorechk \
+    CHECK (Score >= 0); \
+"
+)
 
 ### 6 [0.25]. Write a single query to rank the "Users" by the number of badges, with the User
 ### with the highest number of badges getting rank 1.
@@ -103,18 +138,30 @@ select 0;
 ###
 ### Output Columns: UserID, Rank
 ### Order by: Rank ascending, UserID ascending
-queries[6] = """
-select 0;
-"""
+queries[6] = (
+    " \
+WITH t AS ( \
+    SELECT u.id, COUNT(b.id) AS NumBadges \
+    FROM users u \
+    LEFT JOIN badges b ON u.id = b.userid \
+    GROUP BY u.id \
+) \
+SELECT \
+    id, \
+    RANK() OVER (ORDER BY NumBadges DESC) as Rank \
+FROM t \
+ORDER BY Rank ASC, ID ASC; \
+"
+)
 
 
 ### 7 [0.25]. Write a statement to create a new View with the signature:
 ### PostsSummary(Id, NumVotes, NumComments)
-### 
+###
 ### Use inline scalar subqueries in "select" clause to simplify this.
 ###
 ### This View can be used to more easily keep track of the stats for the posts.
-### 
+###
 ### Confirm that the view is created properly by running:
 ###      select * from PostsSummary limit 10;
 ###
@@ -124,18 +171,33 @@ select 0;
 ### should run very fast.
 ###
 ### Ensure that the latter is case (i.e., the query for a single ID runs quickly).
-queries[7] = """
-select 0;
+queries[7] = (
+    " \
+CREATE VIEW PostsSummary AS \
+WITH tmp1 as (SELECT postid, COUNT(*) AS votes FROM Votes GROUP BY PostId), \
+tmp2 AS (SELECT postid, COUNT(*) AS comments FROM Comments GROUP BY PostId) \
+SELECT id, COALESCE(t1.votes, 0) as NumVotes, COALESCE(t2.comments, 0) as NumComments \
+from posts p left join tmp1 t1 on t1.postid = p.id left join tmp2 t2 on t2.postid = p.id; \
+"
+)
+
 """
+CREATE VIEW PostsSummary AS 
+WITH tmp1 as (SELECT postid, COUNT(*) AS votes FROM Votes GROUP BY PostId), 
+tmp2 AS (SELECT postid, COUNT(*) AS comments FROM Comments GROUP BY PostId) 
+SELECT id, COALESCE(t1.votes, 0) as NumVotes, COALESCE(t2.comments, 0) as NumComments 
+from posts p left join tmp1 t1 on t1.postid = p.id left join tmp2 t2 on t2.postid = p.id; 
+"""
+
 
 ### 8 [0.25]. Use window functions to construct a query to associate with each post
 ### the average score of posts that are created in the same month.
 ###
 ### See here for a tutorial on window functions: https://www.postgresql.org/docs/current/tutorial-window.html
 ###
-### We have created a table using WITH for you: 
+### We have created a table using WITH for you:
 ###         temp(ID, Title, CreatedYear, CreatedMonth, Score)
-### Our goal is to create a new table with columns: 
+### Our goal is to create a new table with columns:
 ###      (ID, Title, CreatedYear, CreatedMonth, Score, AvgScoreForPostsFromThatMonth)
 ### Here: AvgScoreForPostsFromThatMonth is basically the average score of posts across
 ### that are created in that month
@@ -156,13 +218,17 @@ select 0;
 ### 10670 | Which databases support parallel processing across multiple servers? |       2010 |    3 |    5  |          6.6666666666666667
 ###
 
-queries[8] = """
-with temp as (
-        select ID, title, extract(year from CreationDate) as CreatedYear, extract(month from CreationDate) as CreatedMonth, score
-        from posts
-        )
-select 0;
-"""
+queries[8] = (
+    " \
+with temp as ( \
+        select ID, title, extract(year from CreationDate) as CreatedYear, extract(month from CreationDate) as CreatedMonth, score \
+        from posts \
+        ) \
+SELECT ID, title, CreatedYear, CreatedMonth, score, avg(score) OVER (PARTITION BY (CreatedMonth, CreatedYear)) as AvgScoreForPostsFromThatMonth \
+FROM temp \
+ORDER BY CreatedYear, CreatedMonth, ID; \
+"
+)
 
 ### 9 [0.25]. Write a function that takes in the ID of a Post as input, and returns the
 ### number of votes for that post.
@@ -171,20 +237,24 @@ select 0;
 ###
 ### There are several examples here at the bottom: https://www.postgresql.org/docs/10/sql-createfunction.html
 ### You should be writing one that uses SQL, i.e., has "LANGUAGE SQL" at the end.
-### 
+###
 ### So calling NumVotes(20) should return 67. Make sure your function returns 0
 ### appropriately (for Posts who do not have any Votes).
-### 
+###
 ### Confirm that the query below works after the function is created:
 ###             select ID, Title, NumVotes(ID) from Posts limit 100
-### As for one of the questions above, trying to run this query without "limit" 
+### As for one of the questions above, trying to run this query without "limit"
 ### will be very slow given the number of posts.
 ###
-queries[9] = """
-select 0;
-"""
+queries[9] = (
+    " \
+CREATE FUNCTION NumVotes(in int, out NumVotes bigint) \
+    AS $$SELECT COALESCE(COUNT(*), 0) FROM Votes v WHERE v.PostId = $1 $$ \
+    LANGUAGE SQL; \
+"
+)
 
-### 10 [0.5]. Write a function that takes in an Userid as input, and returns a JSON string with 
+### 10 [0.5]. Write a function that takes in an Userid as input, and returns a JSON string with
 ### the details of Posts owned by that user.
 ###
 ### So SQL query: select UserPosts(7);
@@ -197,7 +267,7 @@ select 0;
 ###    ]}
 ###
 ### The posts should be ordered by "date" first, and then by title of the post.
-### 
+###
 ###
 ### You should use PL/pgSQL for this purpose -- writing this purely in SQL is somewhat cumbersome.
 ### i.e., your function should have LANGUAGE plpgsql at the end.
@@ -210,11 +280,69 @@ select 0;
 ###
 ### BE CAREFUL WITH WHITE SPACES -- we will remove any spaces before comparing answers, but there is
 ### still a possibility that you fail comparisons because of that.
-### 
+###
 ### Confirm that: 'select userposts(7);' returns the result above.
-queries[10] = """
-select 0;
-"""
+queries[10] = (" \
+CREATE OR REPLACE FUNCTION UserPosts(in_id integer, OUT PostsJSON varchar) \
+LANGUAGE plpgsql AS $$ \
+DECLARE \
+    u_displayname varchar; \
+    posts_array_text text; \
+BEGIN \
+    SELECT COALESCE(displayname, 'Unknown') INTO u_displayname \
+    FROM users \
+    WHERE id = in_id; \
+    IF u_displayname IS NULL THEN \
+        PostsJSON := format('{\"error\": \"User %s not found\"}', in_id); \
+        RETURN; \
+    END IF; \
+    SELECT string_agg( \
+        format('{\"title\": \"%s\", \"score\": %s, \"creationdate\": \"%s\"}', \
+               COALESCE(title, ''), \
+               score, \
+               creationdate::date), \
+        ', ' \
+    ) INTO posts_array_text \
+    FROM ( \
+        SELECT title, score, creationdate \
+        FROM posts \
+        WHERE owneruserid = in_id \
+        ORDER BY creationdate ASC, title ASC \
+    ) AS sorted_posts; \
+    PostsJSON := format( \
+        '{\"userid\": %s, \"displayname\": \"%s\", \"posts\": [%s]}', \
+        in_id, \
+        u_displayname, \
+        COALESCE(posts_array_text, '') \
+    ); \
+END; \
+$$;")
+
+# queries[10] = (" \
+#     CREATE OR REPLACE FUNCTION UserPosts(in int, out PostsJSON varchar) AS $$ \
+#         BEGIN \
+#             WITH joined_lst AS ( \
+#                 SELECT u.ID, u.DisplayName, p.title, p.score, p.creationdate \
+#                 FROM Users u LEFT JOIN Posts p ON p.OwnerUserId = u.ID \
+#                 WHERE u.ID = $1 \
+#                 ORDER BY p.creationdate, p.title \
+#             ), \
+#             posts_lst AS ( \
+#                 SELECT id, STRING_AGG( \
+#                     FORMAT('{\"title\":\"%s\",\"score\":%s,\"creationdate\":\"%s\"}', \
+#                     COALESCE(title, ''), score, creationdate), ',') posts \
+#                 FROM joined_lst \
+#                 GROUP BY id \
+#                 HAVING COUNT(creationdate) > 0 \
+#             ) \
+#             SELECT DISTINCT FORMAT( \
+#             '{\"userid\":%s,\"displayname\":%s,\"posts\":[%s]}', \
+#             l.ID, l.DisplayName, COALESCE(posts, '')) \
+#             INTO PostsJSON \
+#             FROM joined_lst l LEFT JOIN posts_lst p ON p.id = l.id; \
+#             RETURN; \
+#         END; \
+#     $$ LANGUAGE plpgsql;")
 
 ### 11/12 [0.5]. Create a new table using:
 ###         create table StarUsers as
@@ -224,7 +352,7 @@ select 0;
 ###             group by u.id
 ###             having count(b.ID) > 10;
 ###
-### Create a new trigger that: 
+### Create a new trigger that:
 ###         When a tuple is inserted or deleted or updated in the Badges relation, appropriately
 ### modifies StarUsers.
 ###         Specifically:
@@ -239,7 +367,7 @@ select 0;
 ###                 should be added or removed from StarUsers as necessary.
 ###
 ###
-###  As per PostgreSQL syntax, you have to write two different statements -- queries[11] should be the CREATE FUNCTION statement, 
+###  As per PostgreSQL syntax, you have to write two different statements -- queries[11] should be the CREATE FUNCTION statement,
 ###  and queries[12] should be the CREATE TRIGGER statement.
 ###
 ###  We have provided some partial syntax using the TG_OP variable, but you need to complete the trigger.
@@ -247,38 +375,67 @@ select 0;
 ### You can find several examples of how to write triggers at: https://www.postgresql.org/docs/current/sql-createtrigger.html, and a full example here: https://www.tutorialspoint.com/postgresql/postgresql_triggers.htm
 ###
 ### The trigger should also be named: UpdateStarUsers
-queries[11] = """
-CREATE OR REPLACE FUNCTION UpdateStarUsers()
-    RETURNS TRIGGER
-    LANGUAGE PLPGSQL
-    AS
-    $$
-    declare 
-        cnt integer;
-    BEGIN
-        if TG_OP = 'DELETE' then
-            select 0;
-        elseif TG_OP = 'INSERT' then
-            select 0;
-        elseif TG_OP = 'UPDATE' then
-            select 0;
-        end if;
-        RETURN NULL;
-    END
-    $$;
-select 0;
-"""
 
-queries[12] = """
-select 0;
+queries[11] = (
+    " \
+    CREATE OR REPLACE FUNCTION UpdateStarUsers() \
+    RETURNS TRIGGER \
+    LANGUAGE PLPGSQL \
+    AS \
+    $$ \
+    BEGIN \
+    IF (TG_OP = 'DELETE' OR TG_OP = 'UPDATE') THEN \
+        IF EXISTS (SELECT 1 FROM StarUsers WHERE ID = OLD.UserId) THEN \
+            UPDATE StarUsers \
+            SET NumBadges = NumBadges - 1 \
+            WHERE ID = OLD.UserId; \
+            DELETE FROM StarUsers WHERE ID = OLD.UserId AND NumBadges <= 10; \
+        END IF; \
+    END IF; \
+    IF (TG_OP = 'INSERT' OR TG_OP = 'UPDATE') THEN \
+        IF EXISTS (SELECT 1 FROM StarUsers WHERE ID = NEW.UserId) THEN \
+            UPDATE StarUsers \
+            SET NumBadges = NumBadges + 1 \
+            WHERE ID = NEW.UserId; \
+        ELSE \
+            DECLARE \
+                current_count INTEGER; \
+            BEGIN \
+                SELECT COUNT(*) INTO current_count FROM badges WHERE userid = NEW.UserId; \
+                IF (current_count > 10) THEN \
+                    INSERT INTO StarUsers (ID, NumBadges) VALUES (NEW.UserId, current_count); \
+                END IF; \
+            END; \
+        END IF; \
+    END IF; \
+    RETURN NEW; \
+    END; \
+$$; \
+")
+
+
+queries[12] = (
+    " \
+CREATE OR REPLACE TRIGGER UpdateStarUsers \
+    AFTER INSERT OR DELETE OR UPDATE ON Badges \
+    FOR EACH ROW \
+    EXECUTE FUNCTION UpdateStarUsers(); \
+"
+)
+
+"""
+CREATE OR REPLACE TRIGGER UpdateStarUsers 
+    AFTER INSERT OR DELETE OR UPDATE ON Badges 
+    FOR EACH ROW 
+    EXECUTE FUNCTION UpdateStarUsers();
 """
 
 ### 13 [0.25]. The goal here is to write a query to find the total view count of posts for each
 ### tag. However, tags are currently stored in the format "<mysql><version-control><schema>"
-### 
+###
 ### So write a query to first convert the "tags" strings into an array (make
 ### sure to account for the "<" and ">" characters appropriately), and then
-### use "unnest" to create a temporary table with schema: 
+### use "unnest" to create a temporary table with schema:
 ### temp(tag, postid, viewcount)
 ###
 ### Given this table, we can find the number of total view count of posts for each tag easily.
@@ -287,10 +444,19 @@ select 0;
 ### Order by: TotalViewCounts descending
 ###
 ### Three functions to make this easier: left(), right(), and unnest()
-### 
-queries[13] = """
-select 0;
-"""
+###
+queries[13] = (
+    " \
+WITH temp AS ( \
+    SELECT unnest(regexp_matches(tags, '<([^<>]+)>', 'g')) AS tag, id as postid, viewcount \
+    FROM posts \
+) \
+SELECT tag, SUM(viewcount) AS TotalViewCounts \
+FROM temp \
+GROUP BY tag \
+ORDER BY SUM(viewcount) DESC; \
+"
+)
 
 
 ## 14. [0.5] Create a new table using the following command:
@@ -300,13 +466,33 @@ select 0;
 ###       where p1.id = p2.parentid and p1.owneruserid != p2.owneruserid;
 ###
 ### This table contains pairs of users where the second user has answered a question by the first user.
-### 
-### Write a query that uses a recursive CTE to associate each user with all the users who have answered their questions, 
+###
+### Write a query that uses a recursive CTE to associate each user with all the users who have answered their questions,
 ### or answered questions by users who have answered their questions, and so on, and then counts the number of children
 ### for each user. (This query is a bit artificial as the schema lacks a good recursive structure).
 ###
 ### The output should be a table with two columns: parent, ct
 ### Order by: parent
-queries[14] = """
-select 0;
+queries[14] = (
+    " \
+WITH RECURSIVE children AS ( \
+    SELECT parent, child \
+    FROM answered \
+    UNION \
+    SELECT c.parent, a.child \
+    FROM children c \
+    JOIN answered a ON c.child = a.parent \
+) \
+SELECT parent, COUNT(child) \
+FROM children \
+GROUP BY parent \
+ORDER BY parent; \
+"
+)
+
+"""
+create table Answered as
+    select p1.owneruserid as parent, p2.owneruserid as child
+    from posts p1, posts p2
+    where p1.id = p2.parentid and p1.owneruserid != p2.owneruserid;
 """

@@ -12,8 +12,11 @@ URL naming conventions used here:
 from django.urls import path
 from . import views
 
-urlpatterns = [
+"""
+NOTE: this creates endpoints that are where the data is stored
+"""
 
+urlpatterns = [
     # ── Dashboard ──────────────────────────────────────────────────
     path('', views.dashboard, name='dashboard'),
 

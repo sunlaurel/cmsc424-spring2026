@@ -33,6 +33,11 @@ class Campaign(models.Model):
         ('on_hold',   'On Hold'),
     ]
 
+    """
+    This is where the schema change occurs, but Django won't automatically update the database
+    Will apply in incremental changes by generating migration file and apply migration to DB
+    """
+
     name        = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     world_name  = models.CharField(

@@ -64,6 +64,11 @@ def dashboard(request):
     The home page for logged-in users.
     Shows campaigns they're in, characters they play, and recent sessions.
     """
+
+    """
+    NOTE: won't have to write SQL, but use django sepcified queries
+    """
+
     # Find all campaigns the current user is a member of
     memberships = CampaignPlayer.objects.filter(
         user=request.user

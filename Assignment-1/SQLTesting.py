@@ -30,12 +30,12 @@ cur = conn.cursor()
 
 print("Creating commentscopy table and lengthfiltertype type")
 cur.execute("CREATE TYPE lengthfiltertype AS ENUM ('Long', 'Medium', 'Short');")
-cur.execute("CREATE TABLE commentscopy AS (SELECT * FROM comments);")
+cur.execute("CREATE TABLE IF NOT EXISTS commentscopy AS (SELECT * FROM comments);")
 conn.commit()
 
 print("Creating starusers and answeredtable")
-cur.execute("create table starusers as select u.ID, count(b.ID) as NumBadges from users u left join badges b on u.id = b.userid group by u.id having count(b.ID) > 10;")
-cur.execute("create table answered as select p1.owneruserid as parent, p2.owneruserid as child from posts p1, posts p2 where p1.id = p2.parentid and p1.owneruserid != p2.owneruserid;")
+cur.execute("create table IF NOT EXISTS starusers as select u.ID, count(b.ID) as NumBadges from users u left join badges b on u.id = b.userid group by u.id having count(b.ID) > 10;")
+cur.execute("create table IF NOT EXISTS answered as select p1.owneruserid as parent, p2.owneruserid as child from posts p1, posts p2 where p1.id = p2.parentid and p1.owneruserid != p2.owneruserid;")
 conn.commit()
 
 input('Press enter to proceed')
@@ -143,4 +143,3 @@ for i in range(0, 15):
                 os.system('clear')
         except:
             print(sys.exc_info())
-            
