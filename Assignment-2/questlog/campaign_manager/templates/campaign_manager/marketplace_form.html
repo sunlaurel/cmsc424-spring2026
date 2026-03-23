@@ -1,0 +1,33 @@
+{% extends "campaign_manager/base.html" %}
+
+{% block title %}Post a Listing — QuestLog{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1>⚔️ Post a Listing</h1>
+    <p class="page-subtitle">List an item for sale in the marketplace</p>
+  </div>
+</div>
+
+<div class="card">
+  <form method="POST">
+    {% csrf_token %}
+    {% for field in form %}
+    <div class="form-group">
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}
+      <p class="field-error">{{ field.errors }}</p>
+      {% endif %}
+    </div>
+    {% endfor %}
+    <div class="header-actions">
+      <a href="{% url 'marketplace' %}" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn btn-primary">Post Listing</button>
+    </div>
+  </form>
+</div>
+
+{% endblock %}

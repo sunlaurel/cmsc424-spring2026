@@ -314,7 +314,9 @@ class Encounter(models.Model):
 
 
 class Comment(models.Model):
-
+    """
+    Users can interact with each other through comments in sessions
+    """
     text = models.TextField(blank=True)
     commenter = models.ForeignKey(CampaignPlayer, on_delete=models.CASCADE, related_name='comments')
     session = models.ForeignKey(Session, on_delete=models.CASCADE, related_name='comments')
@@ -329,7 +331,9 @@ class Comment(models.Model):
 
 
 class Announcement(models.Model):
-
+    """
+    Dungeon masters can make announcements in campaigns
+    """
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, related_name="announcements")
     body = models.TextField(blank=True)
     date_posted = models.DateField(auto_now_add=True)
@@ -340,3 +344,27 @@ class Announcement(models.Model):
 
     class Meta:
         ordering = ["date_posted"]
+
+
+class MarketplaceListing(models.Model):
+    """
+    Marketplace where users can put items for bid
+    """
+    STATUS_CHOICES = [
+        ("active", "Active"),
+        ("sold", "Sold"),
+        ("cancelled", "Cancelled"),
+    ]
+
+    seller = models.ForeignKey(User, on_delete=models.CASCADE)
+    seller_description = models.TextField(blank=True)
+    date_posted = models.DateField(auto_now_add=True)
+    price_gold = models.IntegerField()
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="active")
+
+    def __str__(self):
+        return f"{self.seller.username} selling {self.item.name} for {self.price_gold}gp"
+
+    class Meta:
+        ordering = ['-date_posted']  # newest listings first

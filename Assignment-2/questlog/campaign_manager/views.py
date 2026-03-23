@@ -15,7 +15,7 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 
-from .models import Campaign, CampaignPlayer, Character, Session, Encounter, Item, CharacterItem, Announcement, Comment
+from .models import Campaign, CampaignPlayer, Character, Session, Encounter, Item, CharacterItem, Announcement, Comment, MarketplaceListing
 from .forms import (
     RegistrationForm,
     CampaignForm,
@@ -26,6 +26,7 @@ from .forms import (
     AddExistingItemForm,
     CommentForm,
     AnnouncementForm,
+    MarketplaceListingForm,
 )
 
 
@@ -94,6 +95,85 @@ def dashboard(request):
         'characters':      characters,
         'recent_sessions': recent_sessions,
     })
+
+# ─────────────────────────────────────────────────────────────────────
+# Marketplace views
+# ─────────────────────────────────────────────────────────────────────
+@login_required
+def marketplace_create(request):
+    """
+    Lists all items in the system
+    """
+    if request.method == 'POST':
+        form = MarketplaceListingForm(request.POST)
+        if form.is_valid():
+            listing = form.save(commit=False)
+            listing.seller = request.user
+            listing.save()
+            messages.success(request, "Item is on the market!")
+            return redirect('marketplace')
+    else:
+        form = MarketplaceListingForm()
+    return render(request, 'campaign_manager/marketplace_form.html', {
+        'form': form
+    })
+
+@login_required
+def marketplace_buy(request, pk):
+    listing = get_object_or_404(MarketplaceListing, pk=pk, status='active')
+
+    if listing.seller == request.user:
+        messages.error(request, "You can't buy your own listing.")
+        return redirect('marketplace')
+
+    if request.method == 'POST':
+        # Mark listing as sold
+        listing.status = 'sold'
+        listing.save()
+        messages.success(request, f"You bought {listing.item.name}!")
+        return redirect('marketplace')
+
+    return render(request, 'campaign_manager/marketplace_detail.html', {
+        'listing': listing
+    })
+
+@login_required
+def marketplace_cancel(request, pk):
+    listing = get_object_or_404(MarketplaceListing, pk=pk)
+
+    if listing.seller == request.user:
+        listing.status = 'cancelled'
+        listing.save()
+        messages.success(request, f"Successfully cancelled {listing.item.name}!")
+    else:
+        messages.error(request, "Can't cancel other people's listings")
+
+    return redirect('marketplace')
+
+
+@login_required
+def marketplace(request):
+    listings = MarketplaceListing.objects.filter(status='active').order_by('-date_posted')
+
+    item_type = request.GET.get("type")
+    rarity = request.GET.get("rarity")
+    if item_type:
+        listings = listings.filter(item__item_type=item_type)
+    if rarity:
+        listings = listings.filter(item__rarity=rarity)
+
+    for listing in listings:
+        print(listing.item.name)
+
+    return render(request, 'campaign_manager/marketplace.html', {
+        "listings": listings
+    })
+
+
+@login_required
+def marketplace_detail(request, pk):
+    listing = get_object_or_404(MarketplaceListing, pk=pk)
+    return render(request, 'campaign_')
 
 
 # ─────────────────────────────────────────────────────────────────────

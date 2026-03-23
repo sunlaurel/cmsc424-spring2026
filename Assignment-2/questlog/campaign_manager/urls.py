@@ -21,6 +21,24 @@ urlpatterns = [
     path('', views.dashboard, name='dashboard'),
 
 
+    # -–– Marketplace –––––––––––––––––––––––––––––––––––––––––––––––
+    # Listing all items on sale:    GET /marketplace/
+    path('marketplace/', views.marketplace, name='marketplace'),
+
+    # Creating a listing:           POST /marketplace/create
+    path('marketplace/create/', views.marketplace_create, name='marketplace_create'),
+
+    # Getting listing details:      GET /marketplace/5/
+    path('marketplace/<int:pk>/', views.marketplace_detail, name='marketplace_detail'),
+
+    # Buying an item:               POST /marketplace/5/buy
+    path('marketplace/<int:pk>/buy/', views.marketplace_buy, name='marketplace_buy'),
+
+    # Cancelling a listing:        POST /marketplace/5/cancel
+    path('marketplace/<int:pk>/cancel/', views.marketplace_cancel, name='marketplace_cancel'),
+    
+
+
     # ── Campaigns ──────────────────────────────────────────────────
     # List all campaigns:         GET  /campaigns/
     path('campaigns/', views.campaign_list, name='campaign_list'),
@@ -39,7 +57,6 @@ urlpatterns = [
 
     # View campaign announcements  GET/POST  /campaigns/5/announcements
     path('campaigns/<int:campaign_pk>/announcements/', views.create_announcement, name='create_announcement'),
-
 
     # ── Sessions (nested under campaign) ───────────────────────────
     # Log a new session:          GET/POST  /campaigns/5/sessions/create/

@@ -39,6 +39,7 @@
         {% if user.is_authenticated %}
           <!-- Logged-in navigation -->
           <li><a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a></li>
+          <li><a href="{% url 'marketplace' %}" class="nav-link">Marketplace</a></li>
           <li><a href="{% url 'campaign_list' %}" class="nav-link">Campaigns</a></li>
           <li><a href="{% url 'campaign_create' %}" class="nav-link">+ New Campaign</a></li>
           <li class="nav-user">

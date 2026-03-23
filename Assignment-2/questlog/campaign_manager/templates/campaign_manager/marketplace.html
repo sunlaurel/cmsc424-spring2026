@@ -1,0 +1,84 @@
+{% extends "campaign_manager/base.html" %}
+
+{% block title %}Marketplace — QuestLog{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1>⚔️ Marketplace</h1>
+    <p class="page-subtitle">Browse items listed for sale by other players</p>
+  </div>
+  <div class="header-actions">
+    <a href="{% url 'marketplace_create' %}" class="btn btn-primary">+ Post a Listing</a>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="card">
+  <form method="GET">
+    <div class="header-actions">
+      <select name="type" class="form-control">
+        <option value="">All Types</option>
+        <option value="weapon"  {% if request.GET.type == "weapon"  %}selected{% endif %}>Weapon</option>
+        <option value="armor"   {% if request.GET.type == "armor"   %}selected{% endif %}>Armor</option>
+        <option value="potion"  {% if request.GET.type == "potion"  %}selected{% endif %}>Potion</option>
+        <option value="quest"   {% if request.GET.type == "quest"   %}selected{% endif %}>Quest Item</option>
+        <option value="misc"    {% if request.GET.type == "misc"    %}selected{% endif %}>Misc</option>
+      </select>
+      <select name="rarity" class="form-control">
+        <option value="">All Rarities</option>
+        <option value="common"    {% if request.GET.rarity == "common"    %}selected{% endif %}>Common</option>
+        <option value="uncommon"  {% if request.GET.rarity == "uncommon"  %}selected{% endif %}>Uncommon</option>
+        <option value="rare"      {% if request.GET.rarity == "rare"      %}selected{% endif %}>Rare</option>
+        <option value="very_rare" {% if request.GET.rarity == "very_rare" %}selected{% endif %}>Very Rare</option>
+        <option value="legendary" {% if request.GET.rarity == "legendary" %}selected{% endif %}>Legendary</option>
+      </select>
+      <button type="submit" class="btn btn-secondary">Filter</button>
+      <a href="{% url 'marketplace' %}" class="btn btn-secondary">Clear</a>
+    </div>
+  </form>
+</div>
+
+<!-- Listings -->
+{% if listings %}
+<div class="character-list">
+  {% for listing in listings %}
+  <div class="card card-compact">
+    <div>
+      <strong>{{ listing.item.name }}</strong>
+      <span class="badge badge-status-active">{{ listing.item.get_rarity_display }}</span>
+      <span class="text-muted">{{ listing.item.get_item_type_display }}</span>
+    </div>
+    <p class="text-muted">{{ listing.item.description }}</p>
+    <div>
+      <span>💰 {{ listing.price_gold }} gp</span>
+      &bull;
+      <span class="text-muted">Seller: {{ listing.seller.username }}</span>
+      &bull;
+      <span class="text-muted">{{ listing.created_at|date:"M d, Y" }}</span>
+    </div>
+    {% if listing.description %}
+    <p class="text-muted">{{ listing.description }}</p>
+    {% endif %}
+    <div class="header-actions">
+      {% if listing.seller == request.user %}
+      <form method="POST" action="{% url 'marketplace_cancel' pk=listing.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-secondary btn-sm">Cancel Listing</button>
+      </form>
+      {% else %}
+      <a href="{% url 'marketplace_detail' pk=listing.pk %}" class="btn btn-primary btn-sm">View & Buy</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <p>No active listings found.</p>
+  <a href="{% url 'marketplace_create' %}" class="btn btn-secondary">Be the first to post one</a>
+</div>
+{% endif %}
+
+{% endblock %}

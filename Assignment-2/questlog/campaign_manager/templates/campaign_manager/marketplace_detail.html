@@ -1,0 +1,91 @@
+{% extends "campaign_manager/base.html" %}
+
+{% block title %}{{ listing.item.name }} — Marketplace{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1>{{ listing.item.name }}</h1>
+    <p class="page-subtitle">
+      {{ listing.item.get_rarity_display }} &bull;
+      {{ listing.item.get_item_type_display }} &bull;
+      ⚖️ {{ listing.item.weight }} lbs
+    </p>
+  </div>
+</div>
+
+<!-- Item Details -->
+<div class="card">
+  <h2>Item Details</h2>
+  <p>{{ listing.item.description }}</p>
+  <table class="data-table">
+    <tbody>
+      <tr>
+        <td><strong>Type</strong></td>
+        <td>{{ listing.item.get_item_type_display }}</td>
+      </tr>
+      <tr>
+        <td><strong>Rarity</strong></td>
+        <td>{{ listing.item.get_rarity_display }}</td>
+      </tr>
+      <tr>
+        <td><strong>Weight</strong></td>
+        <td>{{ listing.item.weight }} lbs</td>
+      </tr>
+      <tr>
+        <td><strong>Base Value</strong></td>
+        <td>{{ listing.item.value_gold }} gp</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Listing Details -->
+<div class="card">
+  <h2>Listing Details</h2>
+  <table class="data-table">
+    <tbody>
+      <tr>
+        <td><strong>Seller</strong></td>
+        <td>{{ listing.seller.username }}</td>
+      </tr>
+      <tr>
+        <td><strong>Asking Price</strong></td>
+        <td>💰 {{ listing.price_gold }} gp</td>
+      </tr>
+      <tr>
+        <td><strong>Listed On</strong></td>
+        <td>{{ listing.created_at|date:"M d, Y" }}</td>
+      </tr>
+      {% if listing.description %}
+      <tr>
+        <td><strong>Seller Notes</strong></td>
+        <td>{{ listing.description }}</td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Actions -->
+<div class="card">
+  {% if listing.seller == request.user %}
+    <p class="text-muted">This is your listing.</p>
+    <form method="POST" action="{% url 'marketplace_cancel' pk=listing.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-secondary">Cancel Listing</button>
+    </form>
+  {% else %}
+    <p>Ready to purchase <strong>{{ listing.item.name }}</strong> for <strong>💰 {{ listing.price_gold }} gp</strong>?</p>
+    <form method="POST" action="{% url 'marketplace_buy' pk=listing.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-primary">Confirm Purchase</button>
+    </form>
+  {% endif %}
+</div>
+
+<br>
+<a href="{% url 'marketplace' %}">← Back to Marketplace</a>
+
+{% endblock %}

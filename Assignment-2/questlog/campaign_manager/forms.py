@@ -13,7 +13,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
-from .models import Campaign, Character, Session, Encounter, Item, CharacterItem, Comment, Announcement
+from .models import Campaign, Character, Session, Encounter, Item, CharacterItem, Comment, Announcement, MarketplaceListing
 
 
 class RegistrationForm(UserCreationForm):
@@ -51,6 +51,13 @@ class AnnouncementForm(forms.ModelForm):
         widgets = {
             'body': forms.Textarea(attrs={'rows': 4}),
         }
+
+class MarketplaceListingForm(forms.ModelForm):
+    """Form for posting a listing"""
+
+    class Meta:
+        model = MarketplaceListing
+        fields = ['item', 'price_gold', 'seller_description']
 
 
 class CharacterForm(forms.ModelForm):

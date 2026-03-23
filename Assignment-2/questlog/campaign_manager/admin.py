@@ -13,7 +13,7 @@ To access /admin/, you need a superuser account:
 """
 
 from django.contrib import admin
-from .models import Campaign, CampaignPlayer, Character, Session, Encounter, Item, CharacterItem, Comment, Announcement
+from .models import Campaign, CampaignPlayer, Character, Session, Encounter, Item, CharacterItem, Comment, Announcement, MarketplaceListing
 
 
 @admin.register(Campaign)
@@ -68,10 +68,15 @@ class CharacterItemAdmin(admin.ModelAdmin):
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
     list_display = ['commenter', 'text', 'session', 'date_sent']
-    list_filter = ['session', 'commenter']
+    list_filter = ['session']
 
 @admin.register(Announcement)
 class AnnouncementAdmin(admin.ModelAdmin):
     list_display = ['poster', 'body', 'campaign', 'date_posted']
-    
+
+@admin.register(MarketplaceListing)
+class MarketplaceListingAdmin(admin.ModelAdmin):
+    list_display = ['seller', 'seller_description', 'price_gold', 'status', 'item']
+    list_filter = ['seller__username', "item__name"]
+
 
