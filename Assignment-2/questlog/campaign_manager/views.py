@@ -15,7 +15,7 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 
-from .models import Campaign, CampaignPlayer, Character, Session, Encounter, Item, CharacterItem
+from .models import Campaign, CampaignPlayer, Character, Session, Encounter, Item, CharacterItem, Announcement, Comment
 from .forms import (
     RegistrationForm,
     CampaignForm,
@@ -24,6 +24,8 @@ from .forms import (
     EncounterForm,
     ItemForm,
     AddExistingItemForm,
+    CommentForm,
+    AnnouncementForm,
 )
 
 
@@ -186,6 +188,39 @@ def campaign_create(request):
         'form':  form,
         'title': 'Create New Campaign',
     })
+
+@login_required
+def create_announcement(request, campaign_pk):
+    """
+    Lets user make an announcement
+    Only accepts POST requests
+    """
+    campaign = get_object_or_404(Campaign, pk=campaign_pk)
+
+    if campaign.dungeon_master != request.user:
+        messages.error(request, "Only DM can make anouncements")
+        return redirect('campaign_detail', pk=campaign_pk)
+
+    if request.method == 'POST':
+        form = AnnouncementForm(request.POST)
+        if form.is_valid():
+            announcement = form.save(commit=False)
+            announcement.campaign = campaign
+            announcement.poster = get_object_or_404(CampaignPlayer, user=request.user, campaign=campaign)
+            announcement.save()
+            messages.success(request, "Announcement made!")
+            return redirect("campaign_detail", pk=campaign_pk)
+    else:
+        form = AnnouncementForm()
+
+    return render(
+        request,
+        "campaign_manager/announcement_form.html",
+        {
+            "form": form,
+            "campaign": campaign,
+        },
+    )
 
 
 @login_required
@@ -383,13 +418,30 @@ def session_detail(request, pk):
     session    = get_object_or_404(Session, pk=pk)
     encounters = Encounter.objects.filter(session=session)
     is_dm      = session.campaign.dungeon_master == request.user
+    is_member  = CampaignPlayer.objects.filter(campaign=session.campaign, user=request.user).exists()
 
     return render(request, 'campaign_manager/session_detail.html', {
         'session':    session,
         'encounters': encounters,
         'is_dm':      is_dm,
+        'is_member':  is_member,
     })
 
+@login_required
+def add_comment(request, session_pk):
+    session = get_object_or_404(Session, pk=session_pk)
+    campaign_player = get_object_or_404(CampaignPlayer, user=request.user, campaign=session.campaign)
+
+    if request.method == 'POST':
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.session = session
+            comment.commenter = campaign_player
+            comment.save()
+            messages.success(request, "Comment posted!")
+
+    return redirect('session_detail', pk=session_pk)
 
 # ─────────────────────────────────────────────────────────────────────
 # Encounter views

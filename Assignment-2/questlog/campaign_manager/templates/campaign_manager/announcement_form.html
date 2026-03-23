@@ -1,0 +1,26 @@
+{% extends "campaign_manager/base.html" %}
+
+{% block title %}New Announcement — {{ campaign.name }}{% endblock %}
+
+{% block content %}
+
+<h1>Post Announcement to {{ campaign.name }}</h1>
+
+<form method="POST">
+  {% csrf_token %}
+  {% for field in form %}
+    <div class="form-group">
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}
+        <p class="field-error">{{ field.errors }}</p>
+      {% endif %}
+    </div>
+  {% endfor %}
+  <button class="btn-primary-small" type="submit">Post Announcement</button>
+</form>
+
+<br>
+<a href="{% url 'campaign_detail' pk=campaign.pk %}">← Back to Campaign</a>
+
+{% endblock %}

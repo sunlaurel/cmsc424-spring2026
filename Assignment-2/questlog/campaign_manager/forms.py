@@ -13,7 +13,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
-from .models import Campaign, Character, Session, Encounter, Item, CharacterItem
+from .models import Campaign, Character, Session, Encounter, Item, CharacterItem, Comment, Announcement
 
 
 class RegistrationForm(UserCreationForm):
@@ -42,6 +42,16 @@ class CampaignForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'rows': 4}),
         }
 
+class AnnouncementForm(forms.ModelForm):
+    """Form for creating an announcement for a campaign"""
+
+    class Meta:
+        model = Announcement
+        fields = ['body']
+        widgets = {
+            'body': forms.Textarea(attrs={'rows': 4}),
+        }
+
 
 class CharacterForm(forms.ModelForm):
     """Form for creating and editing a character's stats."""
@@ -66,6 +76,17 @@ class SessionForm(forms.ModelForm):
             # type="date" gives a native date-picker in modern browsers
             'date':    forms.DateInput(attrs={'type': 'date'}),
             'summary': forms.Textarea(attrs={'rows': 5}),
+        }
+
+class CommentForm(forms.ModelForm):
+    """
+    Form for adding a comment to a session
+    """
+    class Meta:
+        model = Comment
+        fields = ['text']
+        widgets = {
+            'text': forms.Textarea(attrs={'rows': 3}),
         }
 
 

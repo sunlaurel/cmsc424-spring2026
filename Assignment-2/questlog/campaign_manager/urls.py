@@ -37,6 +37,9 @@ urlpatterns = [
     # Join a campaign:            POST  /campaigns/5/join/
     path('campaigns/<int:pk>/join/', views.campaign_join, name='campaign_join'),
 
+    # View campaign announcements  GET/POST  /campaigns/5/announcements
+    path('campaigns/<int:campaign_pk>/announcements/', views.create_announcement, name='create_announcement'),
+
 
     # ── Sessions (nested under campaign) ───────────────────────────
     # Log a new session:          GET/POST  /campaigns/5/sessions/create/
@@ -49,6 +52,8 @@ urlpatterns = [
     # View session details:       GET  /sessions/3/
     path('sessions/<int:pk>/', views.session_detail, name='session_detail'),
 
+    # Making comments       POST /sessions/3/comments
+    path('sessions/<int:session_pk>/comments', views.add_comment, name='add_comment'),
 
     # ── Encounters (nested under session) ──────────────────────────
     # Add an encounter:           GET/POST  /sessions/3/encounters/create/

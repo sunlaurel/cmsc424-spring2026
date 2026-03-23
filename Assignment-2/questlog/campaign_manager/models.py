@@ -311,3 +311,32 @@ class Encounter(models.Model):
 
     class Meta:
         ordering = ['session', 'id']
+
+
+class Comment(models.Model):
+
+    text = models.TextField(blank=True)
+    commenter = models.ForeignKey(CampaignPlayer, on_delete=models.CASCADE, related_name='comments')
+    session = models.ForeignKey(Session, on_delete=models.CASCADE, related_name='comments')
+    date_sent = models.DateTimeField(auto_now_add=True)
+
+
+    def __str__(self):
+        return f"Comment by {self.commenter} to {self.session} - {self.text}"
+    
+    class Meta:
+        ordering = ['commenter']
+
+
+class Announcement(models.Model):
+
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, related_name="announcements")
+    body = models.TextField(blank=True)
+    date_posted = models.DateField(auto_now_add=True)
+    poster = models.ForeignKey(CampaignPlayer, on_delete=models.CASCADE, related_name='announcements')
+
+    def __str__(self):
+        return f"Announcement by {self.poster} to {self.campaign} - {self.body}"
+
+    class Meta:
+        ordering = ["date_posted"]

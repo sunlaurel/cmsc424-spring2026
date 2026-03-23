@@ -645,6 +645,23 @@ select option {
   flex-shrink: 0;
 }
 
+/* –– Announcement and Comment sections –– */
+.comment-section {
+  margin-top: 5rem;
+}
+
+.announcement-section {
+  margin-bottom: 5rem;;
+}
+
+.announcement-body {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
 /* ── Dashboard sections ── */
 .dashboard-section {
   margin-top: 2.5rem;
