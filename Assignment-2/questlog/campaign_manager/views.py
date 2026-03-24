@@ -118,24 +118,49 @@ def marketplace_create(request):
         'form': form
     })
 
+
 @login_required
 def marketplace_buy(request, pk):
-    listing = get_object_or_404(MarketplaceListing, pk=pk, status='active')
+    listing = get_object_or_404(MarketplaceListing, pk=pk, status="active")
 
+    # Can't buy your own listing
     if listing.seller == request.user:
         messages.error(request, "You can't buy your own listing.")
-        return redirect('marketplace')
+        return redirect("marketplace")
 
-    if request.method == 'POST':
+    if request.method == "POST":
+        character_pk = request.POST.get("character_pk")
+        character = get_object_or_404(Character, pk=character_pk, player=request.user)
+
+        # Add item to character's inventory
+        character_item, created = CharacterItem.objects.get_or_create(
+            character=character, item=listing.item, defaults={"quantity": 1}
+        )
+        # If character already owns the item, just increase quantity
+        if not created:
+            character_item.quantity += 1
+            character_item.save()
+
         # Mark listing as sold
-        listing.status = 'sold'
+        listing.status = "sold"
         listing.save()
-        messages.success(request, f"You bought {listing.item.name}!")
-        return redirect('marketplace')
 
-    return render(request, 'campaign_manager/marketplace_detail.html', {
-        'listing': listing
-    })
+        messages.success(
+            request, f"{listing.item.name} added to {character.name}'s inventory!"
+        )
+        return redirect("marketplace")
+
+    # GET — show confirmation page with character selector
+    characters = Character.objects.filter(player=request.user)
+    return render(
+        request,
+        "campaign_manager/marketplace_buy.html",
+        {
+            "listing": listing,
+            "characters": characters,
+        },
+    )
+
 
 @login_required
 def marketplace_cancel(request, pk):
@@ -168,12 +193,6 @@ def marketplace(request):
     return render(request, 'campaign_manager/marketplace.html', {
         "listings": listings
     })
-
-
-@login_required
-def marketplace_detail(request, pk):
-    listing = get_object_or_404(MarketplaceListing, pk=pk)
-    return render(request, 'campaign_')
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -497,6 +516,7 @@ def session_detail(request, pk):
     """
     session    = get_object_or_404(Session, pk=pk)
     encounters = Encounter.objects.filter(session=session)
+    form       = CommentForm()
     is_dm      = session.campaign.dungeon_master == request.user
     is_member  = CampaignPlayer.objects.filter(campaign=session.campaign, user=request.user).exists()
 
@@ -505,6 +525,7 @@ def session_detail(request, pk):
         'encounters': encounters,
         'is_dm':      is_dm,
         'is_member':  is_member,
+        'form': form,
     })
 
 @login_required

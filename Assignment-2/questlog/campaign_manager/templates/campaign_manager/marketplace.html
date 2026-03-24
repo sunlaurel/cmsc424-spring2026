@@ -68,7 +68,7 @@
         <button type="submit" class="btn btn-secondary btn-sm">Cancel Listing</button>
       </form>
       {% else %}
-      <a href="{% url 'marketplace_detail' pk=listing.pk %}" class="btn btn-primary btn-sm">View & Buy</a>
+      <a href="{% url 'marketplace_buy' pk=listing.pk %}" class="btn btn-primary btn-sm">View & Buy</a>
       {% endif %}
     </div>
   </div>

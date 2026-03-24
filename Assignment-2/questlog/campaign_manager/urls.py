@@ -28,9 +28,6 @@ urlpatterns = [
     # Creating a listing:           POST /marketplace/create
     path('marketplace/create/', views.marketplace_create, name='marketplace_create'),
 
-    # Getting listing details:      GET /marketplace/5/
-    path('marketplace/<int:pk>/', views.marketplace_detail, name='marketplace_detail'),
-
     # Buying an item:               POST /marketplace/5/buy
     path('marketplace/<int:pk>/buy/', views.marketplace_buy, name='marketplace_buy'),
 
