@@ -7,6 +7,7 @@
 PostgreSQL, MongoDB, and Spark pre-loaded (we may update the image later if needed).
     - Install Docker Desktop: https://www.docker.com/products/docker-desktop
     - Run the docker image: `docker run --rm -ti -p 8888:8888 -p 8881:8881 -p 5432:5432 -v /Users/amol/git/cmsc424-spring2026:/data amolumd/cmsc424-spring2026`.
+    - To connect with pgAdmin 4, run the command `echo "host all all 0.0.0.0/0 md5" >> /etc/postgresql/16/main/pg_hba.conf` in the shell and then run `service postgresql restart` to restart the server to accept new connections
     - *If you are on windows or an Intel Mac or if you see a platform mismatch issue, try using: amolumd/cmsc424-spring2026-amd.*
     - Make sure to replace `/Users/amol/git/cmsc424-spring2026` with the correct path of the `top level directory` in the cloned GitHub repository.
     - The above command mounts the local GitHub directory into `/data` on the virtual machine. Do `ls /data` in the virtual machine to confirm that you can see `Assignment-0` directory in there. Make all your changes in that directory itself -- any changes elsewhere in the container will not survive when you exit it.
@@ -19,6 +20,7 @@ PostgreSQL, MongoDB, and Spark pre-loaded (we may update the image later if need
     - At this point, you should be able to use psql: `psql university`
     - Jupyter Lab should be pre-started (try http://127.0.0.1:8888), but if not, you can do: `jupyter lab --port=8888 --allow-root --no-browser --ip=0.0.0.0` inside the virtual machine.
     - As soon as you exit the Docker container, the machine will shut down -- so only changes you have made in the /data directory will persist.
+    - To connect pgAdmin4, run th
 
 1. Confirm that the StackExchange database is also properly loaded into PostgreSQL.
     - Do `psql stackexchange` inside the virtual machine.
